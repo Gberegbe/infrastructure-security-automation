@@ -1,0 +1,67 @@
+# GitLab CI/CD Pipeline Configuration
+# 3-stage pipeline: build -> test -> deploy
+#
+# Prerequisites:
+#   - GitLab Runner with Docker access
+#   - Shared directory for Docker image transfer
+#   - Ansible inventory encrypted with Vault
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  APP_IMAGE: "myproject:${CI_COMMIT_SHA}"
+  DOCKER_ARCHIVE: "docker-image-${CI_COMMIT_SHA}.zip"
+  # Customize these paths for your environment
+  SHARED_PATH1: "/home/${CI_PROJECT_ROOT_NAMESPACE}/space/workspace/shared-runner"
+  SHARED_PATH2: "/shared"
+
+# ==========================================
+# BUILD STAGE
+# ==========================================
+build:
+  stage: build
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: unix:///var/run/docker.sock
+  script:
+    - docker info
+    - docker build -t $APP_IMAGE .
+    - docker save -o ${SHARED_PATH2}/${DOCKER_ARCHIVE} $APP_IMAGE
+    - chmod 666 ${SHARED_PATH2}/${DOCKER_ARCHIVE}
+  tags:
+    - docker
+
+# ==========================================
+# TEST STAGE
+# ==========================================
+test:
+  stage: test
+  script:
+    - echo "Checking PHP syntax..."
+    - docker run --rm $APP_IMAGE php -l /var/www/html/index.php
+    - echo "Testing container startup..."
+    - docker run --rm -d --name test_container $APP_IMAGE
+    - sleep 3
+    - docker exec test_container curl -f http://localhost/ || (docker stop test_container && exit 1)
+    - docker stop test_container
+    - echo "All tests passed successfully"
+  tags:
+    - docker
+
+# ==========================================
+# DEPLOY STAGE
+# ==========================================
+deploy:
+  stage: deploy
+  script:
+    - ansible-playbook -i inventory.ini --vault-password-file ${SHARED_PATH2}/key.txt playbook.yml -e "shared_path=${SHARED_PATH1}" -e "docker_archive=${DOCKER_ARCHIVE}" -e "app_image=${APP_IMAGE}"
+  dependencies:
+    - build
+  # Uncomment to deploy only from main branch:
+  # only:
+  #   - main
+  tags:
+    - docker

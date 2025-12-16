@@ -1,0 +1,54 @@
+---
+# Ansible Playbook for Docker Application Deployment
+# Used by GitLab CI/CD pipeline to deploy the application to target VM
+#
+# Required variables (passed via -e):
+#   - shared_path: Path to shared directory containing Docker archive
+#   - docker_archive: Name of the Docker image archive file
+#   - app_image: Docker image name with tag
+
+- hosts: local
+  gather_facts: false
+  vars:
+    app_port: "{{ lookup('env', 'APP_PORT') | default('8080') }}"
+    container_name: "{{ lookup('env', 'CONTAINER_NAME') | default('web') }}"
+
+  tasks:
+    # Task 1: Load Docker image from archive
+    - name: Load Docker image
+      shell: |
+        docker load -i {{ shared_path }}/{{ docker_archive }}
+        rm {{ shared_path }}/{{ docker_archive }}
+
+    # Task 2: Stop and remove existing container (if any)
+    - name: Stop and remove existing container (if any)
+      shell: |
+        docker stop {{ container_name }} || true
+        docker rm {{ container_name }} || true
+
+    # Task 3: Start new container
+    - name: Start new container
+      shell: |
+        docker run -d --name {{ container_name }} -p {{ app_port }}:80 {{ app_image }}
+
+    # Task 4: Wait for container to be ready
+    - name: Wait for container to be ready
+      pause:
+        seconds: 5
+
+    # Task 5: Healthcheck - Verify application responds
+    - name: Verify application responds (healthcheck)
+      uri:
+        url: "http://localhost:{{ app_port }}"
+        method: GET
+        status_code: 200
+      register: healthcheck
+      retries: 3
+      delay: 2
+      until: healthcheck.status == 200
+
+    # Task 6: Display deployment status
+    - name: Display deployment status
+      debug:
+        msg: "Deployment successful! Application responds on port {{ app_port }}."
+      when: healthcheck.status == 200

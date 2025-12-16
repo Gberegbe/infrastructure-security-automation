@@ -1,0 +1,17 @@
+# Ansible Inventory File (Example)
+#
+# IMPORTANT: This file contains sensitive credentials
+# For production use:
+#   1. Copy this file: cp inventory.ini.example inventory.ini
+#   2. Edit with your actual values
+#   3. Encrypt with Ansible Vault: ansible-vault encrypt inventory.ini
+#
+# To edit encrypted file:
+#   EDITOR=nano ansible-vault edit inventory.ini
+
+[local]
+YOUR_TARGET_IP ansible_user="your-username" ansible_password="your-password"
+
+[local:vars]
+ansible_connection=ssh
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
