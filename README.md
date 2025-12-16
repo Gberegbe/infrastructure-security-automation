@@ -1,5 +1,12 @@
 # Infrastructure Security Automation
 
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![Ansible](https://img.shields.io/badge/Ansible-2.9+-red.svg)
+![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)
+![GitLab CI](https://img.shields.io/badge/GitLab_CI-Pipeline-orange.svg)
+![Trivy](https://img.shields.io/badge/Trivy-Security_Scanner-green.svg)
+![IaC](https://img.shields.io/badge/IaC-Infrastructure_as_Code-purple.svg)
+
 Production-ready DevOps automation toolkit for container security management and CI/CD pipeline deployment. This repository demonstrates Infrastructure as Code practices for maintaining operational and security conditions (MCO/MCS) of containerized applications.
 
 ## Overview
