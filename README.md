@@ -1,13 +1,21 @@
 # Infrastructure Security Automation
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Ansible](https://img.shields.io/badge/Ansible-2.9+-red.svg)
+![Ansible](https://img.shields.io/badge/Ansible-Modern-red.svg)
 ![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)
 ![GitLab CI](https://img.shields.io/badge/GitLab_CI-Pipeline-orange.svg)
 ![Trivy](https://img.shields.io/badge/Trivy-Security_Scanner-green.svg)
 ![IaC](https://img.shields.io/badge/IaC-Infrastructure_as_Code-purple.svg)
 
-Production-ready DevOps automation toolkit for container security management and CI/CD pipeline deployment. This repository demonstrates Infrastructure as Code practices for maintaining operational and security conditions (MCO/MCS) of containerized applications.
+Production-grade **Platform Security / DevSecOps** reference implementation.
+
+This repository demonstrates how to **reduce container risk in production** with:
+- automated CVE scanning + safe rollouts (healthchecks + rollback),
+- CI/CD security gates (build/test/deploy with blocking checks),
+- secrets management (Ansible Vault),
+- auditability (ticketed change trail).
+
+> This is a **reference implementation** showcasing production-grade patterns (gates, rollback, traceability) on a demo environment.
 
 ## Overview
 
@@ -17,6 +25,23 @@ Production-ready DevOps automation toolkit for container security management and
 | **Deployment Downtime** | < 20 seconds (pre-pull strategy) |
 | **Pipeline Protection** | Syntax errors blocked before production |
 | **Audit Trail** | Full traceability via automated ticketing |
+
+> **Scope**: measured on the demo workload (nginx container) using Trivy "CRITICAL" severity before/after automated update & redeploy.
+
+## Evaluate in 10 minutes
+
+1. **CVE lifecycle**: run `scan_vulnerabilities.yml` then `update_docker_image.yml` and observe:
+   - vulnerabilities report,
+   - pre-change backup,
+   - healthcheck gate,
+   - rollback on failure.
+
+2. **CI/CD gates**: open `.gitlab-ci.yml` and check:
+   - build/test/deploy stages,
+   - failure blocking behavior,
+   - deployment via Ansible with verification.
+
+3. **Audit trail**: see how WeKan tickets are created/updated for traceability.
 
 ## Projects
 
@@ -102,6 +127,15 @@ Complete CI/CD implementation for automated application deployment.
 | **Reliability** | Healthchecks, Automatic Rollback, Block/Rescue Patterns |
 | **Traceability** | WeKan API, Automated Ticketing |
 
+## Control Mapping (high-level)
+
+| Control Area | Implementation |
+|--------------|----------------|
+| **Supply chain / container hygiene** | CVE scanning (Trivy), controlled rollout, rollback |
+| **NIST SSDF** | Automated checks in CI, deployment verification, traceability |
+| **SLSA-minded practices** | Pipeline gates, repeatable deployments (IaC) |
+| **Change management** | Ticket-based audit trail (WeKan) |
+
 ## Quick Start
 
 ### Vulnerability Scanning
@@ -149,10 +183,19 @@ git add . && git commit -m "Deploy update" && git push
 - SSH key-based authentication for deployments
 - HTTPS recommended for production WeKan/GitLab endpoints
 
+## Hardening Notes (what I'd do in real production)
+
+- Run Trivy as a CI job + enforce severity thresholds (policy-as-code)
+- Sign images (cosign) and verify signatures at deploy time
+- Protect runners (isolated, least privilege, no Docker socket where possible)
+- Centralize logs/metrics (Prometheus/Grafana) and alert on rollback events
+- Store secrets in a dedicated vault (e.g., HashiCorp Vault) + short-lived credentials
+- Add SBOM generation (Syft) and store artifacts for audit
+
 ## Requirements
 
 - Docker & Docker Compose
-- Ansible 2.9+
+- Ansible (tested with modern releases)
 - GitLab (for CI/CD pipeline)
 - Python 3.x
 - Trivy (runs as container)
@@ -189,6 +232,8 @@ infrastructure-security-automation/
 ## Author
 
 **Laurent Giovannoni**
+
+Focus: industrializing security controls in CI/CD and production operations.
 
 ## License
 
